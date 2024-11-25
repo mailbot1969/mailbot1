@@ -53,6 +53,7 @@ mpirun -np 4 ./mpi_pi_integration
 Open MP PI
 
 sudo apt install -y build-essential
+sudo apt install libomp-dev
 
 #include <stdio.h>
 #include <omp.h>
