@@ -1,0 +1,103 @@
+MPI PI
+
+#include <mpi.h>
+#include <stdio.h>
+#include <math.h>
+
+double f(double x) {
+    return 4.0 / (1.0 + x * x);
+}
+
+double integrate(int start, int end, int num_intervals, double step) {
+    double local_sum = 0.0;
+    for (int i = start; i < end; i++) {
+        double x = (i + 0.5) * step;
+        local_sum += f(x);
+    }
+    return local_sum * step;
+}
+
+int main(int argc, char* argv[]) {
+    int rank, size;
+    int num_intervals = 1000000;
+    double step, local_sum, global_sum;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    step = 1.0 / num_intervals;
+
+    int intervals_per_process = num_intervals / size;
+    int start = rank * intervals_per_process;
+    int end = (rank + 1) * intervals_per_process;
+
+    local_sum = integrate(start, end, num_intervals, step);
+
+    MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        printf("Estimated value of Pi: %.10f\n", global_sum);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+
+mpicc -o mpi_pi_integration mpi_pi_integration.c
+mpirun -np 4 ./mpi_pi_integration
+
+
+Open MP PI
+
+#include <stdio.h>
+#include <omp.h>
+
+double f(double x) {
+    return 4.0 / (1.0 + x * x);
+}
+
+double integrate(int num_intervals) {
+    double step = 1.0 / num_intervals;
+    double sum = 0.0;
+
+    #pragma omp parallel
+    {
+        double local_sum = 0.0;
+
+        #pragma omp for
+        for (int i = 0; i < num_intervals; i++) {
+            double x = (i + 0.5) * step;
+            local_sum += f(x);
+        }
+
+        #pragma omp atomic
+        sum += local_sum;
+    }
+
+    return sum * step;
+}
+
+int main() {
+    int num_intervals = 1000000;
+    double pi;
+
+    #pragma omp parallel
+    {
+        #pragma omp single
+        printf("Number of threads: %d\n", omp_get_num_threads());
+    }
+
+    pi = integrate(num_intervals);
+    printf("Estimated value of Pi: %.10f\n", pi);
+
+    return 0;
+}
+
+gcc -fopenmp -o openmp_pi_integration openmp_pi_integration.c
+./openmp_pi_integration
+
+gcc -fopenmp -o openmp_pi_integration openmp_pi_integration.c
+./openmp_pi_integration
+
+
