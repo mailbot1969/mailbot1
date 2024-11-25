@@ -1,5 +1,7 @@
 MPI PI
 
+sudo apt install -y openmpi-bin libopenmpi-dev
+
 #include <mpi.h>
 #include <stdio.h>
 #include <math.h>
@@ -49,6 +51,8 @@ mpirun -np 4 ./mpi_pi_integration
 
 
 Open MP PI
+
+sudo apt install -y build-essential
 
 #include <stdio.h>
 #include <omp.h>
